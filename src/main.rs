@@ -1,9 +1,12 @@
+#![feature(dropck_eyepatch)]
 pub struct Boks<T> {
     p: *mut T,
 }
 
-impl<T> Drop for Boks<T> {
+unsafe impl<#[may_dangle] T> Drop for Boks<T> {
     fn drop(&mut self) {
+        // let _: u8 = unsafe { std::ptr::read(self.p as *const u8) };
+
         // Safety: p was constructed from a Box in the first place, and has not been freed
         // otherwise since self still exists (otherwise, drop could not be called)
         unsafe { Box::from_raw(self.p) };
@@ -41,4 +44,12 @@ fn main() {
     let x = 42;
     let b = Boks::ny(x);
     println!("{:?}", *b);
+
+    let mut y = 42;
+    let b = Boks::ny(&mut y);
+    // let b = Box::new(&mut y);
+    // println!("{:?}", *b);
+    println!("{:?}", y);
+    // y = 43;
+    // drop(b); // read from mut y
 }
