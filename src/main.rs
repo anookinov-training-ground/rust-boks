@@ -4,6 +4,8 @@ pub struct Boks<T> {
 
 impl<T> Drop for Boks<T> {
     fn drop(&mut self) {
+        // Safety: p was constructed from a Box in the first place, and has not been freed
+        // otherwise since self still exists (otherwise, drop could not be called)
         unsafe { Box::from_raw(self.p) };
         // unsafe { std::ptr::drop_in_place(self.p) };
     }
