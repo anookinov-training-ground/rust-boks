@@ -8,6 +8,10 @@ pub struct Boks<T> {
     _t: PhantomData<T>,
 }
 
+// Cannot treat Boks<&'static str> as Boks<&'some_shorter_lifetime str>
+// even though &'static str as &'some_shorter_lifetime str
+// and can treat Box<&'static str> as Box<&'some_shorter_lifetime str>
+
 unsafe impl<#[may_dangle] T> Drop for Boks<T> {
     fn drop(&mut self) {
         // let _: u8 = unsafe { std::ptr::read(self.p as *const u8) };
@@ -70,4 +74,14 @@ fn main() {
     let mut z = 42;
     let b = Boks::ny(Oisann(&mut z));
     println!("{:?}", z);
+
+    let s = String::from("hei");
+    let mut box1 = Box::new(&*s);
+    let box2: Box<&'static str> = Box::new("heisann");
+    box1 = box2;
+
+    // let s = String::from("hei");
+    // let mut boks1 = Boks::ny(&*s);
+    // let boks2: Boks<&'static str> = Boks::ny("heisann");
+    // boks1 = boks2;
 }
