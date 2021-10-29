@@ -10,6 +10,23 @@ pub struct Boks<T> {
     _t: PhantomData<T>,
 }
 
+struct Deserializer<T> {
+    _t: PhantomData<fn() -> T>, // covariance but no drop check
+}
+
+struct EmptyIterator<T> {
+    _t: PhantomData<fn() -> T>, // covariance but no drop check
+}
+
+impl<T> Iterator for EmptyIterator<T> {
+    type Item = T;
+    fn next(&mut self) -> Option<Self::Item> {
+        None
+    }
+}
+
+// Deserializer<Oisann<&mut i32>>
+
 // Cannot treat Boks<&'static str> as Boks<&'some_shorter_lifetime str>
 // even though &'static str as &'some_shorter_lifetime str
 // and can treat Box<&'static str> as Box<&'some_shorter_lifetime str>
