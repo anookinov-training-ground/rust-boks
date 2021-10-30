@@ -1,13 +1,14 @@
 #![feature(dropck_eyepatch)]
 
 use std::fmt::Debug;
+use std::iter::Empty;
 use std::marker::PhantomData;
 use std::ptr::NonNull;
 
 pub struct Boks<T> {
     // p: *mut T,
     p: NonNull<T>,
-    _t: PhantomData<T>,
+    _t: PhantomData<T>, // covariance and drop check
 }
 
 struct Deserializer<T> {
@@ -15,7 +16,13 @@ struct Deserializer<T> {
 }
 
 struct EmptyIterator<T> {
-    _t: PhantomData<fn() -> T>, // covariance but no drop check
+    _t: PhantomData<T>,
+}
+
+impl<T> Default for EmptyIterator<T> {
+    fn default() -> Self {
+        EmptyIterator { _t: PhantomData }
+    }
 }
 
 impl<T> Iterator for EmptyIterator<T> {
@@ -104,4 +111,19 @@ fn main() {
     let mut boks1 = Boks::ny(&*s);
     let boks2: Boks<&'static str> = Boks::ny("heisann");
     boks1 = boks2;
+
+    let mut a = 42;
+    let mut it: Empty<Oisann<&'static mut i32>> = Empty::default();
+    // struct Empty<T>(PhantomData<T>)
+    // Empty<Oisann<&mut a>>
+    let mut o = Some(Oisann(&mut a));
+    {
+        // because of this:
+        o /* ...<&'a mut i32> */ = it.next() /* returns ...<&'static mut i32> */;
+    }
+
+    // &'a mut T is invariant in T, but covariant in 'a
+    drop(o); // 'a ends here
+    println!("{:?}", a);
+    let _ = it.next();
 }
